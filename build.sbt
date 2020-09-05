@@ -97,7 +97,7 @@ lazy val yarnTask = inputKey[Unit]("Run yarn with arguments")
 lazy val copyWebapp = taskKey[Unit]("Copy webapp")
 
 lazy val commonSettings = commonSmlBuildSettings ++ Seq(
-  organization := "com.softwaremill.bootzooka",
+  organization := "com.github.nguyenmv2.raas",
   scalaVersion := "2.13.2",
   libraryDependencies ++= commonDependencies,
   uiDirectory := baseDirectory.value.getParentFile / uiProjectName,
@@ -135,12 +135,12 @@ lazy val buildInfoSettings = Seq(
   buildInfoOptions += BuildInfoOption.BuildTime,
   buildInfoOptions += BuildInfoOption.ToJson,
   buildInfoOptions += BuildInfoOption.ToMap,
-  buildInfoPackage := "com.softwaremill.bootzooka.version",
+  buildInfoPackage := "com.github.nguyenmv2.raas.version",
   buildInfoObject := "BuildInfo"
 )
 
 lazy val fatJarSettings = Seq(
-  assemblyJarName in assembly := "bootzooka.jar",
+  assemblyJarName in assembly := "raas.jar",
   assembly := assembly.dependsOn(copyWebapp).value,
   assemblyMergeStrategy in assembly := {
     case PathList(ps @ _*) if ps.last endsWith "io.netty.versions.properties" => MergeStrategy.first
@@ -154,7 +154,7 @@ lazy val fatJarSettings = Seq(
 lazy val dockerSettings = Seq(
   dockerExposedPorts := Seq(8080),
   dockerBaseImage := "adoptopenjdk:11.0.5_10-jdk-hotspot",
-  packageName in Docker := "bootzooka",
+  packageName in Docker := "raas",
   dockerUsername := Some("softwaremill"),
   dockerCommands := {
     dockerCommands.value.flatMap {
@@ -191,7 +191,7 @@ def now(): String = {
 lazy val rootProject = (project in file("."))
   .settings(commonSettings)
   .settings(
-    name := "bootzooka",
+    name := "raas",
     herokuFatJar in Compile := Some((assemblyOutputPath in backend in assembly).value),
     deployHeroku in Compile := ((deployHeroku in Compile) dependsOn (assembly in backend)).value
   )
@@ -200,7 +200,7 @@ lazy val rootProject = (project in file("."))
 lazy val backend: Project = (project in file("backend"))
   .settings(
     libraryDependencies ++= dbDependencies ++ httpDependencies ++ jsonDependencies ++ apiDocsDependencies ++ monitoringDependencies ++ dbTestingStack ++ securityDependencies ++ emailDependencies,
-    mainClass in Compile := Some("com.softwaremill.bootzooka.Main")
+    mainClass in Compile := Some("com.github.nguyenmv2.raas.Main")
   )
   .enablePlugins(BuildInfoPlugin)
   .settings(commonSettings)
