@@ -13,7 +13,7 @@ import tsec.passwordhashers.jca.SCrypt
 class UserModel {
 
   def insert(user: User): ConnectionIO[Unit] = {
-    sql"""INSERT INTO users (id, login, login_lowercase, email_lowercase, password, created_on)
+    sql"""INSERT INTO users (id, login, login_lowercase, email_lowercase, password, created_at)
          |VALUES (${user.id}, ${user.login}, ${user.loginLowerCased}, ${user.emailLowerCased}, ${user.passwordHash}, ${user.createdOn})""".stripMargin.update.run.void
   }
 
@@ -34,7 +34,7 @@ class UserModel {
   }
 
   private def findBy(by: Fragment): ConnectionIO[Option[User]] = {
-    (sql"SELECT id, login, login_lowercase, email_lowercase, password, created_on FROM users WHERE " ++ by)
+    (sql"SELECT id, login, login_lowercase, email_lowercase, password, created_at FROM users WHERE " ++ by)
       .query[User]
       .option
   }

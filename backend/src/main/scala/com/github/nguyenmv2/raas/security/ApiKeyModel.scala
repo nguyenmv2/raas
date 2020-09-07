@@ -12,12 +12,12 @@ import com.softwaremill.tagging.@@
 class ApiKeyModel {
 
   def insert(apiKey: ApiKey): ConnectionIO[Unit] = {
-    sql"""INSERT INTO api_keys (id, user_id, created_on, valid_until)
+    sql"""INSERT INTO api_keys (id, user_id, created_at, valid_until)
          |VALUES (${apiKey.id}, ${apiKey.userId}, ${apiKey.createdOn}, ${apiKey.validUntil})""".stripMargin.update.run.void
   }
 
   def findById(id: Id @@ ApiKey): ConnectionIO[Option[ApiKey]] = {
-    sql"""SELECT id, user_id, created_on, valid_until FROM api_keys WHERE id = $id"""
+    sql"""SELECT id, user_id, created_at, valid_until FROM api_keys WHERE id = $id"""
       .query[ApiKey]
       .option
   }

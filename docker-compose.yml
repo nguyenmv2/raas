@@ -7,8 +7,8 @@ services:
     depends_on:
       - raas-db
     environment:
-      SQL_USERNAME: 'postgres'
-      SQL_PASSWORD: 'b00t200k4'
+      SQL_USERNAME: 'raas'
+      SQL_PASSWORD: 'raas'
       SQL_DBNAME: 'raas'
       SQL_HOST: 'raas-db'
       SQL_PORT: '5432'
@@ -18,6 +18,6 @@ services:
     ports:
       - '25432:5432'
     environment:
-      POSTGRES_USER: 'postgres'
-      POSTGRES_PASSWORD: 'b00t200k4'
+      POSTGRES_USER: 'raas'
+      POSTGRES_PASSWORD: 'raas'
       POSTGRES_DB: 'raas'
