@@ -9,12 +9,13 @@ import com.softwaremill.tagging.@@
 import tsec.common.VerificationStatus
 import tsec.passwordhashers.PasswordHash
 import tsec.passwordhashers.jca.SCrypt
+import com.github.nguyenmv2.raas.account.Account
 
 class UserModel {
 
   def insert(user: User): ConnectionIO[Unit] = {
-    sql"""INSERT INTO users (id, login, login_lowercase, email_lowercase, password, created_at)
-         |VALUES (${user.id}, ${user.login}, ${user.loginLowerCased}, ${user.emailLowerCased}, ${user.passwordHash}, ${user.createdOn})""".stripMargin.update.run.void
+    sql"""INSERT INTO users (id, account_id, login, login_lowercase, email_lowercase, password, created_at)
+         |VALUES (${user.id}, ${user.accountId}, ${user.login}, ${user.loginLowerCased}, ${user.emailLowerCased}, ${user.passwordHash}, ${user.createdOn})""".stripMargin.update.run.void
   }
 
   def findById(id: Id @@ User): ConnectionIO[Option[User]] = {
@@ -34,7 +35,7 @@ class UserModel {
   }
 
   private def findBy(by: Fragment): ConnectionIO[Option[User]] = {
-    (sql"SELECT id, login, login_lowercase, email_lowercase, password, created_at FROM users WHERE " ++ by)
+    (sql"SELECT id, account_id, login, login_lowercase, email_lowercase, password, created_at FROM users WHERE " ++ by)
       .query[User]
       .option
   }
@@ -51,6 +52,7 @@ class UserModel {
 
 case class User(
     id: Id @@ User,
+    accountId: Id @@ Account,
     login: String,
     loginLowerCased: String @@ LowerCased,
     emailLowerCased: String @@ LowerCased,

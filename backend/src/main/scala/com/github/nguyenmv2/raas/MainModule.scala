@@ -10,6 +10,7 @@ import com.github.nguyenmv2.raas.metrics.MetricsModule
 import com.github.nguyenmv2.raas.passwordreset.PasswordResetModule
 import com.github.nguyenmv2.raas.security.SecurityModule
 import com.github.nguyenmv2.raas.user.UserModule
+import com.github.nguyenmv2.raas.account.AccountModule
 import com.github.nguyenmv2.raas.util.{DefaultIdGenerator, IdGenerator, ServerEndpoints}
 import monix.eval.Task
 
@@ -20,6 +21,7 @@ trait MainModule
     extends SecurityModule
     with EmailModule
     with UserModule
+    with AccountModule
     with PasswordResetModule
     with MetricsModule
     with InfrastructureModule {
@@ -29,7 +31,7 @@ trait MainModule
 
   lazy val http: Http = new Http()
 
-  private lazy val endpoints: ServerEndpoints = userApi.endpoints concatNel passwordResetApi.endpoints
+  private lazy val endpoints: ServerEndpoints = userApi.endpoints concatNel passwordResetApi.endpoints concatNel accountApi.endpoints
   private lazy val adminEndpoints: ServerEndpoints = NonEmptyList.of(metricsApi.metricsEndpoint, versionApi.versionEndpoint)
 
   lazy val httpApi: HttpApi = new HttpApi(http, endpoints, adminEndpoints, collectorRegistry, config.api)

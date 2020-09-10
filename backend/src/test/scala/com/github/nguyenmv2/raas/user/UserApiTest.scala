@@ -18,7 +18,7 @@ import sttp.client.{NothingT, SttpBackend}
 
 import scala.concurrent.duration._
 
-class UserApiTest extends BaseTest with TestEmbeddedPostgres with Eventually {
+class UserApiTest extends BaseTest with TestEmbeddedPostgres with Eventually { 
   lazy val modules: MainModule = new MainModule {
     override def xa: Transactor[Task] = currentDb.xa
     override lazy val baseSttpBackend: SttpBackend[Task, Nothing, NothingT] = SttpBackendStub(TaskMonadAsyncError)
@@ -28,13 +28,14 @@ class UserApiTest extends BaseTest with TestEmbeddedPostgres with Eventually {
 
   val requests = new Requests(modules)
   import requests._
-
+  
   "/user/register" should "register" in {
+    val account = registeredAccount()
     // given
     val (login, email, password) = randomLoginEmailPassword()
 
     // when
-    val response1 = registerUser(login, email, password)
+    val response1 = registerUser(login, email, password, account.id)
 
     // then
     response1.status shouldBe Status.Ok
@@ -48,11 +49,12 @@ class UserApiTest extends BaseTest with TestEmbeddedPostgres with Eventually {
   }
 
   "/user/register" should "not register if data is invalid" in {
+    val account = registeredAccount()
     // given
     val (_, email, password) = randomLoginEmailPassword()
 
     // when
-    val response1 = registerUser("x", email, password) // too short
+    val response1 = registerUser("x", email, password, account.id) // too short
 
     // then
     response1.status shouldBe Status.BadRequest
@@ -60,12 +62,13 @@ class UserApiTest extends BaseTest with TestEmbeddedPostgres with Eventually {
   }
 
   "/user/register" should "not register if email is taken" in {
+    val account = registeredAccount()
     // given
     val (login, email, password) = randomLoginEmailPassword()
 
     // when
-    val response1 = registerUser(login + "1", email, password)
-    val response2 = registerUser(login + "2", email, password)
+    val response1 = registerUser(login + "1", email, password, account.id)
+    val response2 = registerUser(login + "2", email, password, account.id)
 
     // then
     response1.status shouldBe Status.Ok

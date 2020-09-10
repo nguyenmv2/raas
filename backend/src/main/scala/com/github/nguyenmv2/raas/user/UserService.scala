@@ -13,6 +13,7 @@ import com.github.nguyenmv2.raas.infrastructure.Doobie._
 import com.github.nguyenmv2.raas.util._
 
 import scala.concurrent.duration.Duration
+import com.github.nguyenmv2.raas.account.Account
 
 class UserService(
     userModel: UserModel,
@@ -27,7 +28,7 @@ class UserService(
   private val LoginAlreadyUsed = "Login already in use!"
   private val EmailAlreadyUsed = "E-mail already in use!"
 
-  def registerNewUser(login: String, email: String, password: String): ConnectionIO[ApiKey] = {
+  def registerNewUser(login: String, email: String, password: String, accountId: Id @@ Account): ConnectionIO[ApiKey] = {
     def failIfDefined(op: ConnectionIO[Option[User]], msg: String): ConnectionIO[Unit] = {
       op.flatMap {
         case None    => ().pure[ConnectionIO]
@@ -41,7 +42,7 @@ class UserService(
     }
 
     def doRegister(): ConnectionIO[ApiKey] = {
-      val user = User(idGenerator.nextId[User](), login, login.lowerCased, email.lowerCased, User.hashPassword(password), clock.instant())
+      val user = User(idGenerator.nextId[User](), accountId, login, login.lowerCased, email.lowerCased, User.hashPassword(password), clock.instant())
       val confirmationEmail = emailTemplates.registrationConfirmation(login)
 
       logger.debug(s"Registering new user: ${user.emailLowerCased}, with id: ${user.id}")
@@ -49,13 +50,13 @@ class UserService(
       for {
         _ <- userModel.insert(user)
         _ <- emailScheduler(EmailData(email, confirmationEmail))
-        apiKey <- apiKeyService.create(user.id, config.defaultApiKeyValid)
+        apiKey <- apiKeyService.create(user.id, accountId, config.defaultApiKeyValid)
       } yield apiKey
     }
 
     for {
       _ <- UserRegisterValidator
-        .validate(login, email, password)
+        .validate(login, email, password, accountId)
         .fold(msg => Fail.IncorrectInput(msg).raiseError[ConnectionIO, Unit], _ => ().pure[ConnectionIO])
       _ <- checkUserDoesNotExist()
       apiKey <- doRegister()
@@ -68,7 +69,7 @@ class UserService(
     for {
       user <- userOrNotFound(userModel.findByLoginOrEmail(loginOrEmail.lowerCased))
       _ <- verifyPassword(user, password)
-      apiKey <- apiKeyService.create(user.id, apiKeyValid.getOrElse(config.defaultApiKeyValid))
+      apiKey <- apiKeyService.create(user.id, user.accountId, apiKeyValid.getOrElse(config.defaultApiKeyValid))
     } yield apiKey
 
   def changeUser(userId: Id @@ User, newLogin: String, newEmail: String): ConnectionIO[Unit] = {
@@ -125,11 +126,12 @@ object UserRegisterValidator {
   private val ValidationOk = Right(())
   val MinLoginLength = 3
 
-  def validate(login: String, email: String, password: String): Either[String, Unit] =
+  def validate(login: String, email: String, password: String, accountId: String): Either[String, Unit] =
     for {
       _ <- validLogin(login.trim)
       _ <- validEmail(email.trim)
       _ <- validPassword(password.trim)
+      _ <- validAccountId(accountId)
     } yield ()
 
   private def validLogin(login: String): Either[String, Unit] =
@@ -143,4 +145,7 @@ object UserRegisterValidator {
 
   private def validPassword(password: String) =
     if (password.nonEmpty) ValidationOk else Left("Password cannot be empty!")
+  
+  private def validAccountId(accountId: String) = 
+    if (accountId.nonEmpty) ValidationOk else Left("Account cannot be empty!")
 }

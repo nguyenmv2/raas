@@ -8,11 +8,13 @@ import com.github.nguyenmv2.raas.infrastructure.Json._
 import com.github.nguyenmv2.raas.infrastructure.Doobie._
 import com.github.nguyenmv2.raas.metrics.Metrics
 import com.github.nguyenmv2.raas.security.{ApiKey, Auth}
-import com.github.nguyenmv2.raas.util.ServerEndpoints
+import com.github.nguyenmv2.raas.util.{ ServerEndpoints, Id }
 import doobie.util.transactor.Transactor
 import monix.eval.Task
+import com.softwaremill.tagging.@@
 
 import scala.concurrent.duration._
+import com.github.nguyenmv2.raas.account.Account
 
 class UserApi(http: Http, auth: Auth[ApiKey], userService: UserService, xa: Transactor[Task]) {
   import UserApi._
@@ -26,7 +28,7 @@ class UserApi(http: Http, auth: Auth[ApiKey], userService: UserService, xa: Tran
     .out(jsonBody[Register_OUT])
     .serverLogic { data =>
       (for {
-        apiKey <- userService.registerNewUser(data.login, data.email, data.password).transact(xa)
+        apiKey <- userService.registerNewUser(data.login, data.email, data.password, data.account_id).transact(xa)
         _ <- Task(Metrics.registeredUsersCounter.inc())
       } yield Register_OUT(apiKey.id)).toOut
     }
@@ -90,8 +92,7 @@ class UserApi(http: Http, auth: Auth[ApiKey], userService: UserService, xa: Tran
 }
 
 object UserApi {
-
-  case class Register_IN(login: String, email: String, password: String)
+  case class Register_IN(login: String, email: String, password: String, account_id: Id @@ Account)
   case class Register_OUT(apiKey: String)
 
   case class ChangePassword_IN(currentPassword: String, newPassword: String)

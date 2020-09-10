@@ -3,6 +3,13 @@ package com.github.nguyenmv2.raas.metrics
 import io.prometheus.client.{Counter, Gauge, hotspot}
 
 object Metrics {
+  lazy val registeredAccountsCounter: Counter =
+    Counter
+      .build()
+      .name("raas_registerd_accounts_counter")
+      .help("How many accounts registered on this instance since it was started")
+      .register()
+
   lazy val registeredUsersCounter: Counter =
     Counter
       .build()
